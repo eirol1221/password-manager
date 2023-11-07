@@ -32,6 +32,13 @@ def update_file(data):
     with open("data.json", "w") as data_txt:
         json.dump(data, data_txt, indent=4)
 
+
+# ---------------------------- READ FILE ------------------------------- #
+def read_file():
+    with open("data.json", "r") as data_txt:
+        return json.load(data_txt)
+
+
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
     website = website_entry.get()
@@ -44,12 +51,11 @@ def save():
         }
     }
 
-    if website == "" or password == "":
+    if len(website) == 0 or len(password) == 0 or len(email) == 0:
         messagebox.showinfo(title="Oops", message="Please don't leave any fields empty!")
     else:
         try:
-            with open("data.json", "r") as data_txt:
-                data = json.load(data_txt)
+            data = read_file()
         except FileNotFoundError:
             update_file(new_data)
         else:
@@ -69,14 +75,25 @@ def show_password():
         pw_entry.config(show='*')
 
 
-# ---------------------------- RETRIEVE PASSWORD ------------------------------- #
+# ---------------------------- SEARCH DATA ------------------------------- #
 def search():
     website = website_entry.get()
-    if website == "":
-        messagebox.showinfo(title="", message="Please type a website name.")
+
+    try:
+        data = read_file()
+    except FileNotFoundError:
+        messagebox.showinfo("Error", "No Data File Found")
     else:
-        data = pd.read_csv("data.txt", header=None)
-        print(data[0])
+        if len(website) == 0:
+            messagebox.showinfo(title="Error", message="Please type a website name.")
+        else:
+            if website in data:
+                email = data[website]["email"]
+                password = data[website]["password"]
+                pyperclip.copy(password)
+                messagebox.showinfo("", f"Email: {email}\nPassword: {password}\n\nPassword is copied to clipboard.")
+            else:
+                messagebox.showinfo("Error", f"No details for {website} exists.")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -109,7 +126,7 @@ website_entry.focus()
 
 user_entry = Entry(width=50, font=FONT)
 user_entry.grid(row=2, column=1, columnspan=2, sticky="w", pady=5, padx=5)
-user_entry.insert(0, "eirol1221@gmail.com")
+# user_entry.insert(0, "eirol1221@gmail.com")
 
 pw_entry = Entry(width=25, font=FONT, show='*')
 pw_entry.grid(row=3, column=1, sticky="w", pady=5, padx=5)
@@ -121,7 +138,7 @@ generate_pw.grid(row=3, column=2, sticky="e", pady=5, padx=5)
 add_button = Button(text="Add", font=FONT, command=save)
 add_button.grid(row=5, column=1, columnspan=2, sticky="ew", pady=5, padx=5)
 
-search_button = Button(text="Search", font=FONT, width=16, bg="blue")
+search_button = Button(text="Search", font=FONT, width=16, bg="light blue", command=search)
 search_button.grid(row=1, column=2, sticky='e', pady=5, padx=5)
 
 # checkbutton
