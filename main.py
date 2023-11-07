@@ -27,6 +27,10 @@ def pw_generator():
     pw_entry.insert(0, password)
     pyperclip.copy(password)
 
+# ---------------------------- DUMP DATA ON FILE ------------------------------- #
+def update_file(data):
+    with open("data.json", "w") as data_txt:
+        json.dump(data, data_txt, indent=4)
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
@@ -43,8 +47,15 @@ def save():
     if website == "" or password == "":
         messagebox.showinfo(title="Oops", message="Please don't leave any fields empty!")
     else:
-        with open("data.json", "w") as data_txt:
-            json.dump(new_data, data_txt, indent=4)
+        try:
+            with open("data.json", "r") as data_txt:
+                data = json.load(data_txt)
+        except FileNotFoundError:
+            update_file(new_data)
+        else:
+            data.update(new_data)
+            update_file(data)
+        finally:
             website_entry.delete(0, END)
             pw_entry.delete(0, END)
             website_entry.focus()
