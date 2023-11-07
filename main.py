@@ -3,9 +3,12 @@ from tkinter import *
 from tkinter import messagebox
 from random import randint, choice, sample
 import pyperclip
+import pandas as pd
+import json
 
 # CONSTANTS
 FONT = ("Arial", 10, "bold")
+
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def pw_generator():
@@ -24,25 +27,28 @@ def pw_generator():
     pw_entry.insert(0, password)
     pyperclip.copy(password)
 
+
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
     website = website_entry.get()
     email = user_entry.get()
     password = pw_entry.get()
-    print(website, password)
+    new_data = {
+        website: {
+            "email": email,
+            "password": password,
+        }
+    }
 
     if website == "" or password == "":
         messagebox.showinfo(title="Oops", message="Please don't leave any fields empty!")
     else:
-        save_texts = messagebox.askokcancel(title="website", message=f"These are the details entered: "
-                                                                     f"\nWebsite: {website}\nEmail: {email}"
-                                                                     f"\nPassword: {password}\nIs it okay to save?")
-        if save_texts:
-            with open("data.txt", mode="a") as data_txt:
-                data_txt.write(f"{website} | {email} | {password}\n")
-                website_entry.delete(0, END)
-                pw_entry.delete(0, END)
-                website_entry.focus()
+        with open("data.json", "w") as data_txt:
+            json.dump(new_data, data_txt, indent=4)
+            website_entry.delete(0, END)
+            pw_entry.delete(0, END)
+            website_entry.focus()
+
 
 # ---------------------------- SHOW/HIDE PASSWORD ------------------------------- #
 def show_password():
@@ -51,8 +57,18 @@ def show_password():
     else:
         pw_entry.config(show='*')
 
-# ---------------------------- UI SETUP ------------------------------- #
 
+# ---------------------------- RETRIEVE PASSWORD ------------------------------- #
+def search():
+    website = website_entry.get()
+    if website == "":
+        messagebox.showinfo(title="", message="Please type a website name.")
+    else:
+        data = pd.read_csv("data.txt", header=None)
+        print(data[0])
+
+
+# ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
 window.title("Password Manager")
 window.config(padx=60, pady=70)
@@ -64,7 +80,6 @@ canvas = Canvas(width=200, height=200)
 logo = PhotoImage(file="logo.png")
 canvas.create_image(100, 100, image=logo)
 canvas.grid(row=0, column=0, columnspan=3)
-# row=, column=
 
 # Labels
 website_label = Label(text="Website:", font=FONT)
@@ -77,8 +92,8 @@ pw_label = Label(text="Password:", font=FONT)
 pw_label.grid(row=3, column=0, pady=5)
 
 # Entries
-website_entry = Entry(width=50, font=FONT)
-website_entry.grid(row=1, column=1, columnspan=2, sticky="w", pady=5, padx=5)
+website_entry = Entry(width=25, font=FONT)
+website_entry.grid(row=1, column=1, sticky="w", pady=5, padx=5)
 website_entry.focus()
 
 user_entry = Entry(width=50, font=FONT)
@@ -92,8 +107,11 @@ pw_entry.grid(row=3, column=1, sticky="w", pady=5, padx=5)
 generate_pw = Button(text="Generate Password", font=FONT, command=pw_generator)
 generate_pw.grid(row=3, column=2, sticky="e", pady=5, padx=5)
 
-add_button = Button(text="Add", width=41, font=FONT, command=save)
+add_button = Button(text="Add", font=FONT, command=save)
 add_button.grid(row=5, column=1, columnspan=2, sticky="ew", pady=5, padx=5)
+
+search_button = Button(text="Search", font=FONT, width=16, bg="blue")
+search_button.grid(row=1, column=2, sticky='e', pady=5, padx=5)
 
 # checkbutton
 show_pw_button = Checkbutton(text="Show password", variable=pw_var, onvalue=1, offvalue=0, command=show_password)
